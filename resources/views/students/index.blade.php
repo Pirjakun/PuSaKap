@@ -88,5 +88,12 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination -->
+    @if($students->hasPages())
+        <div class="pt-4">
+            {{ $students->links() }}
+        </div>
+    @endif
 </div>
 @endsection

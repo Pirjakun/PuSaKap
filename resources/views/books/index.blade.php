@@ -93,5 +93,12 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination -->
+    @if($books->hasPages())
+        <div class="pt-4">
+            {{ $books->links() }}
+        </div>
+    @endif
 </div>
 @endsection
