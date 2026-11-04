@@ -170,7 +170,7 @@
                     if (url.origin !== window.location.origin) return; // External link
                     
                     // Exclude anchor-only links, form actions, target opens or downloads
-                    if (link.getAttribute('target') || link.getAttribute('download') || link.href.includes('#')) return;
+                    if (link.getAttribute('target') || link.hasAttribute('download') || link.href.includes('#')) return;
                     
                     // Exclude specific api routes or files
                     if (url.pathname.startsWith('/api') || url.pathname.endsWith('.php')) return;
