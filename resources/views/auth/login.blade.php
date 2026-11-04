@@ -55,7 +55,7 @@
     <div class="w-full max-w-md">
         <!-- Logo / Brand Header -->
         <div class="flex justify-center mb-8">
-            <img src="{{ asset('images/sang-cakap-logo.png') }}" alt="PuSaKap - Perpustakaan Sang Cakap" class="h-16 w-auto">
+            <img src="{{ asset('images/sang-cakap-logo.webp') }}" alt="PuSaKap - Perpustakaan Sang Cakap" class="h-16 w-auto">
         </div>
 
         <!-- Glassmorphic / Dashboard Themed Login Card -->

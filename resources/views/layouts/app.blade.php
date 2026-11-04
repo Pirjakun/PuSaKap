@@ -39,7 +39,7 @@
         <div class="max-w-7xl mx-auto px-5 sm:px-6 py-3 flex items-center justify-between">
             <div class="flex items-center gap-8">
                 <a href="{{ url('/') }}" class="flex items-center">
-                    <img src="{{ asset('images/sang-cakap-logo.png') }}" alt="PuSaKap - Perpustakaan Sang Cakap" class="h-10 sm:h-12 w-auto">
+                    <img src="{{ asset('images/sang-cakap-logo.webp') }}" alt="PuSaKap - Perpustakaan Sang Cakap" class="h-10 sm:h-12 w-auto">
                 </a>
 
                 <!-- Navigation Links -->
