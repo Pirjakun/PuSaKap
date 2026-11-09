@@ -7,14 +7,20 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <WiFiManager.h>
 
-// --- Konfigurasi WiFi ---
-const char* ssid     = "IT2.4G";
-const char* password = "KosongDelapan12";
+// --- Konfigurasi WiFi Manager ---
+// Nama Access Point yang muncul saat ESP32 belum/gagal konek ke WiFi tersimpan.
+// Hubungkan HP/laptop ke AP ini, browser akan otomatis terbuka ke halaman setup
+// (atau buka manual: 192.168.4.1) untuk memilih SSID & memasukkan password.
+#define WIFI_AP_NAME "PuSaKap-Setup"
+#define WIFI_PORTAL_TIMEOUT 180  // detik, portal otomatis tutup & retry jika tidak dikonfigurasi
+
+WiFiManager wifiManager;
 
 // --- Konfigurasi Server API Laravel ---
 // Ganti IP di bawah ini dengan IP laptop/server Laravel Anda jika berubah
-const char* serverUrl = "https://r4v4na-pusakap-dashboard.hf.space/api/rfid/tap";
+const char* serverUrl = "http://192.168.100.85:8000/api/rfid/tap";
 
 // --- Konfigurasi Pin RFID ---
 #define SDA_PIN  5
@@ -89,19 +95,48 @@ void setup() {
   SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, SDA_PIN); 
   rfid.PCD_Init(); 
 
-  // 4. Menghubungkan ke Jaringan WiFi
+  // 3b. Beri jendela 3 detik untuk reset WiFi tersimpan lewat Serial Monitor
+  //     (ketik 'R' lalu Enter) jika mau ganti ke jaringan WiFi lain.
+  display.clearDisplay();
+  display.setCursor(0, 10);
+  display.println("Ketik 'R' di Serial");
+  display.setCursor(0, 25);
+  display.println("utk reset WiFi...");
+  display.display();
+  unsigned long waktuTunggu = millis();
+  while (millis() - waktuTunggu < 3000) {
+    if (Serial.available() && Serial.read() == 'R') {
+      Serial.println("Mereset WiFi tersimpan...");
+      wifiManager.resetSettings();
+      break;
+    }
+  }
+
+  // 4. Menghubungkan ke Jaringan WiFi (otomatis via WiFiManager)
   display.clearDisplay();
   display.setCursor(0, 20);
   display.println("Menghubungkan WiFi...");
   display.display();
 
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  // Kalau ada WiFi tersimpan dari setup sebelumnya, langsung dicoba konek.
+  // Kalau tidak ada / gagal, otomatis buka Access Point setup (lihat tampilanModeSetup).
+  wifiManager.setAPCallback(tampilanModeSetup);
+  wifiManager.setConfigPortalTimeout(WIFI_PORTAL_TIMEOUT);
+
+  if (!wifiManager.autoConnect(WIFI_AP_NAME)) {
+    // Portal setup timeout tanpa dikonfigurasi -> restart dan coba lagi dari awal
+    Serial.println("\nGagal konek WiFi & timeout portal setup. Restart...");
+    display.clearDisplay();
+    display.setCursor(0, 20);
+    display.println("Setup WiFi timeout.");
+    display.setCursor(0, 35);
+    display.println("Restarting...");
+    display.display();
+    delay(2000);
+    ESP.restart();
   }
-  
-  Serial.println("\nWiFi Terhubung!");
+
+  Serial.println("\nWiFi Terhubung! IP: " + WiFi.localIP().toString());
 
   tampilanAwal();
 }
@@ -323,6 +358,26 @@ void prosesResponsServer(int responseCode, HTTPClient* http) {
     delay(1500);
     tampilanAwal();
   }
+}
+
+void tampilanModeSetup(WiFiManager *wm) {
+  // Dipanggil otomatis oleh WiFiManager saat Access Point setup aktif
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println("MODE SETUP WIFI");
+  display.setCursor(0, 15);
+  display.println("Hubungkan HP ke WiFi:");
+  display.setCursor(0, 27);
+  display.println(WIFI_AP_NAME);
+  display.setCursor(0, 42);
+  display.println("Lalu buka browser ke:");
+  display.setCursor(0, 54);
+  display.println(WiFi.softAPIP().toString());
+  display.display();
+
+  Serial.println("Mode setup WiFi aktif. Hubungkan ke AP: " + String(WIFI_AP_NAME));
 }
 
 void tampilanAwal() {

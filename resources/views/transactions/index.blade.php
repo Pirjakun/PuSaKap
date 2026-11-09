@@ -17,7 +17,7 @@
             </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <a href="{{ route('transactions.export', ['status' => $status]) }}" download class="w-full sm:w-auto justify-center px-5 py-2.5 border border-rose-mid/20 text-rose-deep bg-rose-soft hover:bg-rose-deep hover:text-white rounded-full text-sm font-bold transition-all flex items-center gap-2">
+            <a href="{{ route('transactions.export', ['status' => $status, 'search' => $search]) }}" download class="w-full sm:w-auto justify-center px-5 py-2.5 border border-rose-mid/20 text-rose-deep bg-rose-soft hover:bg-rose-deep hover:text-white rounded-full text-sm font-bold transition-all flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
@@ -32,17 +32,37 @@
         </div>
     </div>
 
-    <!-- Filter Tabs -->
-    <div class="flex flex-wrap gap-2 pb-2 border-b border-slate-100">
-        <a href="{{ route('transactions.index') }}" class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all {{ !$status ? 'bg-rose-soft text-rose-deep' : 'bg-slate-50 text-slate-500 hover:bg-slate-100' }}">
-            Semua ({{ \App\Models\Transaction::count() }})
-        </a>
-        <a href="{{ route('transactions.index', ['status' => 'borrowed']) }}" class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all {{ $status === 'borrowed' ? 'bg-sky-soft text-sky-deep' : 'bg-slate-50 text-slate-500 hover:bg-slate-100' }}">
-            Sedang Dipinjam ({{ \App\Models\Transaction::whereNull('returned_at')->count() }})
-        </a>
-        <a href="{{ route('transactions.index', ['status' => 'returned']) }}" class="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all {{ $status === 'returned' ? 'bg-mint-soft text-mint-deep' : 'bg-slate-50 text-slate-500 hover:bg-slate-100' }}">
-            Sudah Dikembalikan ({{ \App\Models\Transaction::whereNotNull('returned_at')->count() }})
-        </a>
+    <!-- Filter Tabs + Search -->
+    <div class="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between pb-2 border-b border-slate-100">
+        <div class="flex gap-2 overflow-x-auto pb-1 lg:pb-0 shrink-0">
+            <a href="{{ route('transactions.index', ['search' => $search]) }}" class="shrink-0 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all {{ !$status ? 'bg-rose-soft text-rose-deep' : 'bg-slate-50 text-slate-500 hover:bg-slate-100' }}">
+                Semua ({{ \App\Models\Transaction::count() }})
+            </a>
+            <a href="{{ route('transactions.index', ['status' => 'borrowed', 'search' => $search]) }}" class="shrink-0 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all {{ $status === 'borrowed' ? 'bg-sky-soft text-sky-deep' : 'bg-slate-50 text-slate-500 hover:bg-slate-100' }}">
+                Sedang Dipinjam ({{ \App\Models\Transaction::whereNull('returned_at')->count() }})
+            </a>
+            <a href="{{ route('transactions.index', ['status' => 'returned', 'search' => $search]) }}" class="shrink-0 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all {{ $status === 'returned' ? 'bg-mint-soft text-mint-deep' : 'bg-slate-50 text-slate-500 hover:bg-slate-100' }}">
+                Sudah Dikembalikan ({{ \App\Models\Transaction::whereNotNull('returned_at')->count() }})
+            </a>
+        </div>
+
+        <form action="{{ route('transactions.index') }}" method="GET" class="flex items-center gap-2 w-full lg:w-72 lg:shrink-0">
+            @if($status)
+                <input type="hidden" name="status" value="{{ $status }}">
+            @endif
+            <div class="flex items-center w-full gap-2 pl-4 pr-3 py-2.5 rounded-full border border-slate-200 bg-slate-50 focus-within:ring-2 focus-within:ring-rose-mid/30 focus-within:border-rose-mid/40 transition-all">
+                <svg class="w-4 h-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"></path>
+                </svg>
+                <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, NIS, judul buku..."
+                    class="flex-1 min-w-0 bg-transparent text-sm placeholder:text-slate-400 focus:outline-none">
+                @if($search)
+                    <a href="{{ route('transactions.index', ['status' => $status]) }}" class="shrink-0 text-slate-400 hover:text-rose-deep" aria-label="Hapus pencarian">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </a>
+                @endif
+            </div>
+        </form>
     </div>
 
     <!-- Table Container -->
@@ -143,7 +163,13 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
                                     </svg>
                                 </div>
-                                <span class="text-sm font-semibold">Belum ada data transaksi sirkulasi.</span>
+                                <span class="text-sm font-semibold">
+                                    @if($search)
+                                        Tidak ada transaksi yang cocok dengan "{{ $search }}".
+                                    @else
+                                        Belum ada data transaksi sirkulasi.
+                                    @endif
+                                </span>
                             </div>
                         </td>
                     </tr>

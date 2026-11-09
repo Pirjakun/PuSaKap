@@ -16,6 +16,7 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $status = $request->input('status');
+        $search = $request->input('search');
         $query = Transaction::with(['student', 'book'])->latest();
 
         if ($status === 'borrowed') {
@@ -24,9 +25,21 @@ class TransactionController extends Controller
             $query->whereNotNull('returned_at');
         }
 
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('student', function ($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%")
+                       ->orWhere('nim', 'like', "%{$search}%");
+                })->orWhereHas('book', function ($bq) use ($search) {
+                    $bq->where('title', 'like', "%{$search}%")
+                       ->orWhere('rfid_uid', 'like', "%{$search}%");
+                });
+            });
+        }
+
         $transactions = $query->paginate(15)->withQueryString();
 
-        return view('transactions.index', compact('transactions', 'status'));
+        return view('transactions.index', compact('transactions', 'status', 'search'));
     }
 
     /**
@@ -134,12 +147,25 @@ class TransactionController extends Controller
     public function export(Request $request)
     {
         $status = $request->input('status');
+        $search = $request->input('search');
         $query = Transaction::with(['student', 'book'])->latest();
 
         if ($status === 'borrowed') {
             $query->whereNull('returned_at');
         } elseif ($status === 'returned') {
             $query->whereNotNull('returned_at');
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('student', function ($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%")
+                       ->orWhere('nim', 'like', "%{$search}%");
+                })->orWhereHas('book', function ($bq) use ($search) {
+                    $bq->where('title', 'like', "%{$search}%")
+                       ->orWhere('rfid_uid', 'like', "%{$search}%");
+                });
+            });
         }
 
         $transactions = $query->get();

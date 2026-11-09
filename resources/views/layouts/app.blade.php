@@ -155,7 +155,7 @@
     </footer>
 
     <!-- SPA Router with Skeleton Loader -->
-    <script>
+    <script data-spa-persistent="true">
         document.addEventListener('DOMContentLoaded', () => {
             // Intercept all local anchor clicks
             document.body.addEventListener('click', e => {
@@ -374,8 +374,11 @@
                     document.querySelector('header').innerHTML = newHeader.innerHTML;
                 }
                 
-                // Jalankan script yang ada di halaman yang baru dimuat
-                const scripts = doc.querySelectorAll('script');
+                // Jalankan script halaman baru, KECUALI script layout utama (data-spa-persistent).
+                // Script layout pakai event delegation di document/body, jadi listener-nya sudah
+                // otomatis jalan lagi tanpa perlu didaftarkan ulang. Re-run itu hanya akan
+                // menumpuk listener duplikat setiap kali pindah halaman (makin lama dipakai, makin lag).
+                const scripts = doc.querySelectorAll('script:not([data-spa-persistent])');
                 scripts.forEach(oldScript => {
                     const newScript = document.createElement('script');
                     Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
